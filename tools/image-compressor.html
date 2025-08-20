@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Compressor - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-3xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">Image Compressor</h1>
+            <p class="text-center text-gray-500 mb-8">Kompres gambar JPG, PNG, atau WEBP tanpa kehilangan kualitas yang signifikan.</p>
+
+            <!-- Uploader -->
+            <div class="mb-6">
+                <label for="image-upload" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Klik untuk mengunggah</span> atau seret dan lepas</p>
+                        <p class="text-xs text-gray-500">JPG, PNG, WEBP (MAX. 10MB)</p>
+                    </div>
+                    <input id="image-upload" type="file" class="hidden" accept="image/jpeg, image/png, image/webp" />
+                </label>
+            </div>
+
+            <!-- Results -->
+            <div id="result-section" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
+                    <!-- Original Image -->
+                    <div>
+                        <h3 class="text-lg font-bold text-secondary mb-2">Original</h3>
+                        <img id="original-image" class="w-full h-auto rounded-lg shadow-md mx-auto max-h-64 object-contain">
+                        <p id="original-size" class="mt-2 text-sm text-gray-600"></p>
+                    </div>
+                    <!-- Compressed Image -->
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-2">Compressed</h3>
+                        <img id="compressed-image" class="w-full h-auto rounded-lg shadow-md mx-auto max-h-64 object-contain">
+                        <p id="compressed-size" class="mt-2 text-sm text-gray-600"></p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <a id="download-btn" class="w-full md:w-auto inline-block bg-green-500 text-white font-bold py-3 px-8 rounded-full hover:bg-green-600 transition-colors text-lg">
+                        <i class="fas fa-download mr-2"></i>Unduh Gambar
+                    </a>
+                </div>
+            </div>
+             <div id="loader" class="hidden text-center">
+                <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
+                <p class="mt-2 text-gray-600">Mengompres gambar...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const imageUpload = document.getElementById('image-upload');
+            const resultSection = document.getElementById('result-section');
+            const loader = document.getElementById('loader');
+
+            const originalImage = document.getElementById('original-image');
+            const originalSize = document.getElementById('original-size');
+            const compressedImage = document.getElementById('compressed-image');
+            const compressedSize = document.getElementById('compressed-size');
+            const downloadBtn = document.getElementById('download-btn');
+
+            imageUpload.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                resultSection.classList.add('hidden');
+                loader.classList.remove('hidden');
+
+                originalImage.src = URL.createObjectURL(file);
+                originalSize.textContent = `Ukuran: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 1920,
+                    useWebWorker: true,
+                };
+
+                try {
+                    const compressedFile = await imageCompression(file, options);
+
+                    compressedImage.src = URL.createObjectURL(compressedFile);
+                    const percentage = (((file.size - compressedFile.size) / file.size) * 100).toFixed(2);
+                    compressedSize.textContent = `Ukuran: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB (${percentage}% lebih kecil)`;
+
+                    downloadBtn.href = URL.createObjectURL(compressedFile);
+                    downloadBtn.download = `compressed_${file.name}`;
+
+                    loader.classList.add('hidden');
+                    resultSection.classList.remove('hidden');
+
+                } catch (error) {
+                    loader.classList.add('hidden');
+                    alert('Gagal mengompres gambar. Pastikan format file didukung.');
+                    console.error(error);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
