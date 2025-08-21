@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Zone Converter - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.34/moment-timezone-with-data.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-4xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">Time Zone Converter</h1>
+            <p class="text-center text-gray-500 mb-8">Konversi waktu antara zona waktu yang berbeda.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="from-zone" class="block text-sm font-medium text-gray-700">Zona Waktu Asal</label>
+                    <select id="from-zone" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></select>
+                    <input type="datetime-local" id="from-time" class="mt-2 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div>
+                    <label for="to-zone" class="block text-sm font-medium text-gray-700">Zona Waktu Tujuan</label>
+                    <select id="to-zone" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></select>
+                    <input type="text" id="to-time" class="mt-2 block w-full p-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fromZoneSelect = document.getElementById('from-zone');
+            const toZoneSelect = document.getElementById('to-zone');
+            const fromTimeInput = document.getElementById('from-time');
+            const toTimeInput = document.getElementById('to-time');
+
+            const timezones = moment.tz.names();
+
+            timezones.forEach(zone => {
+                const option1 = document.createElement('option');
+                option1.value = zone;
+                option1.textContent = zone;
+                fromZoneSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = zone;
+                option2.textContent = zone;
+                toZoneSelect.appendChild(option2);
+            });
+
+            // Set default timezones
+            fromZoneSelect.value = moment.tz.guess();
+            toZoneSelect.value = 'UTC';
+
+            // Set default time
+            fromTimeInput.value = moment().format('YYYY-MM-DDTHH:mm');
+
+
+            function convertTime() {
+                const fromZone = fromZoneSelect.value;
+                const toZone = toZoneSelect.value;
+                const fromTime = fromTimeInput.value;
+
+                if (fromTime) {
+                    const fromMoment = moment.tz(fromTime, fromZone);
+                    const toMoment = fromMoment.clone().tz(toZone);
+                    toTimeInput.value = toMoment.format('YYYY-MM-DD HH:mm:ss Z');
+                }
+            }
+
+            fromZoneSelect.addEventListener('change', convertTime);
+            toZoneSelect.addEventListener('change', convertTime);
+            fromTimeInput.addEventListener('input', convertTime);
+
+            convertTime();
+        });
+    </script>
+
+</body>
+</html>

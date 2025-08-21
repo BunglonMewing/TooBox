@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percentage Calculator - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-4xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">Percentage Calculator</h1>
+            <p class="text-center text-gray-500 mb-8">Hitung berbagai jenis persentase dengan mudah.</p>
+
+            <!-- Calculator 1 -->
+            <div class="mb-6 p-4 border border-gray-200 rounded-lg">
+                <p class="font-semibold text-lg text-primary mb-2">Berapa % dari Y?</p>
+                 <div class="flex items-center gap-2">
+                    <input type="number" id="p1-x" class="w-full p-2 border border-gray-300 rounded-md" placeholder="X">
+                    <span class="text-gray-600">% dari</span>
+                    <input type="number" id="p1-y" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Y">
+                    <button id="p1-calc" class="bg-primary text-white p-2 rounded-md hover:bg-secondary transition-colors">Hitung</button>
+                    <input type="text" id="p1-res" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                </div>
+            </div>
+
+            <!-- Calculator 2 -->
+            <div class="mb-6 p-4 border border-gray-200 rounded-lg">
+                <p class="font-semibold text-lg text-primary mb-2">X adalah berapa % dari Y?</p>
+                 <div class="flex items-center gap-2">
+                    <input type="number" id="p2-x" class="w-full p-2 border border-gray-300 rounded-md" placeholder="X">
+                    <span class="text-gray-600">adalah berapa % dari</span>
+                    <input type="number" id="p2-y" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Y">
+                    <button id="p2-calc" class="bg-primary text-white p-2 rounded-md hover:bg-secondary transition-colors">Hitung</button>
+                    <input type="text" id="p2-res" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                </div>
+            </div>
+
+            <!-- Calculator 3 -->
+            <div class="p-4 border border-gray-200 rounded-lg">
+                <p class="font-semibold text-lg text-primary mb-2">Berapa persentase kenaikan/penurunan dari X ke Y?</p>
+                 <div class="flex items-center gap-2">
+                    <span class="text-gray-600">Dari</span>
+                    <input type="number" id="p3-x" class="w-full p-2 border border-gray-300 rounded-md" placeholder="X">
+                    <span class="text-gray-600">ke</span>
+                    <input type="number" id="p3-y" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Y">
+                    <button id="p3-calc" class="bg-primary text-white p-2 rounded-md hover:bg-secondary transition-colors">Hitung</button>
+                    <input type="text" id="p3-res" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Calculator 1
+            document.getElementById('p1-calc').addEventListener('click', () => {
+                const x = parseFloat(document.getElementById('p1-x').value);
+                const y = parseFloat(document.getElementById('p1-y').value);
+                if (!isNaN(x) && !isNaN(y)) {
+                    document.getElementById('p1-res').value = (x / 100) * y;
+                }
+            });
+
+            // Calculator 2
+            document.getElementById('p2-calc').addEventListener('click', () => {
+                const x = parseFloat(document.getElementById('p2-x').value);
+                const y = parseFloat(document.getElementById('p2-y').value);
+                if (!isNaN(x) && !isNaN(y) && y !== 0) {
+                    document.getElementById('p2-res').value = ((x / y) * 100).toFixed(2) + '%';
+                }
+            });
+
+            // Calculator 3
+            document.getElementById('p3-calc').addEventListener('click', () => {
+                const x = parseFloat(document.getElementById('p3-x').value);
+                const y = parseFloat(document.getElementById('p3-y').value);
+                if (!isNaN(x) && !isNaN(y) && x !== 0) {
+                    const change = ((y - x) / x) * 100;
+                    document.getElementById('p3-res').value = change.toFixed(2) + '%';
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

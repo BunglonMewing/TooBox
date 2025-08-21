@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Number Generator - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-4xl mx-auto rounded-xl shadow-lg p-8 text-center">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">Random Number Generator</h1>
+            <p class="text-center text-gray-500 mb-8">Hasilkan angka acak dalam rentang yang Anda tentukan.</p>
+
+            <div class="flex items-center justify-center gap-4 mb-6">
+                <label for="min" class="text-gray-700">Min:</label>
+                <input type="number" id="min" value="1" class="w-24 p-2 border border-gray-300 rounded-lg">
+                <label for="max" class="text-gray-700">Max:</label>
+                <input type="number" id="max" value="100" class="w-24 p-2 border border-gray-300 rounded-lg">
+            </div>
+
+            <button id="generate-btn" class="bg-primary text-white font-bold py-3 px-8 rounded-full hover:bg-secondary transition-colors mb-6">Hasilkan</button>
+
+            <div id="result" class="text-6xl font-bold text-accent">?</div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const minInput = document.getElementById('min');
+            const maxInput = document.getElementById('max');
+            const generateBtn = document.getElementById('generate-btn');
+            const resultDiv = document.getElementById('result');
+
+            generateBtn.addEventListener('click', () => {
+                const min = parseInt(minInput.value, 10);
+                const max = parseInt(maxInput.value, 10);
+
+                if (isNaN(min) || isNaN(max) || min > max) {
+                    resultDiv.textContent = 'Input tidak valid';
+                    return;
+                }
+
+                const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+                resultDiv.textContent = randomNumber;
+            });
+        });
+    </script>
+
+</body>
+</html>

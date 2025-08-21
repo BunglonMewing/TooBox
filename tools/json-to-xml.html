@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON to XML Converter - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-4xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">JSON to XML Converter</h1>
+            <p class="text-center text-gray-500 mb-8">Tempel JSON Anda di bawah untuk dikonversi ke XML.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="json-input" class="block text-sm font-medium text-gray-700 mb-2">JSON Input</label>
+                    <textarea id="json-input" class="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" placeholder="Tempel JSON di sini..."></textarea>
+                </div>
+                <div>
+                    <label for="xml-output" class="block text-sm font-medium text-gray-700 mb-2">XML Output</label>
+                    <textarea id="xml-output" class="w-full h-64 p-4 border border-gray-300 rounded-lg bg-gray-50" readonly placeholder="Hasil XML akan muncul di sini..."></textarea>
+                </div>
+            </div>
+            <div class="text-center mt-6">
+                <button id="convert-btn" class="bg-primary text-white font-bold py-2 px-6 rounded-full hover:bg-secondary transition-colors">Konversi</button>
+                <button id="copy-btn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-full hover:bg-gray-600 transition-colors ml-4">Salin Hasil</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const jsonInput = document.getElementById('json-input');
+            const xmlOutput = document.getElementById('xml-output');
+            const convertBtn = document.getElementById('convert-btn');
+            const copyBtn = document.getElementById('copy-btn');
+
+            convertBtn.addEventListener('click', () => {
+                try {
+                    const jsonObj = JSON.parse(jsonInput.value);
+                    const xmlStr = jsonToXml(jsonObj);
+                    xmlOutput.value = formatXml(xmlStr);
+                } catch (e) {
+                    xmlOutput.value = 'JSON tidak valid: ' + e.message;
+                }
+            });
+
+            copyBtn.addEventListener('click', () => {
+                xmlOutput.select();
+                document.execCommand('copy');
+                alert('Hasil disalin ke clipboard!');
+            });
+
+            function jsonToXml(obj, rootName = 'root') {
+                let xml = '';
+                for (let prop in obj) {
+                    if (obj.hasOwnProperty(prop)) {
+                        if (Array.isArray(obj[prop])) {
+                            obj[prop].forEach(item => {
+                                xml += `<${prop}>`;
+                                xml += jsonToXml(item);
+                                xml += `</${prop}>`;
+                            });
+                        } else if (typeof obj[prop] === 'object') {
+                            xml += `<${prop}>`;
+                            xml += jsonToXml(obj[prop]);
+                            xml += `</${prop}>`;
+                        } else {
+                            xml += `<${prop}>${obj[prop]}</${prop}>`;
+                        }
+                    }
+                }
+                return xml;
+            }
+
+            function formatXml(xml) {
+                let formatted = '';
+                let reg = /(>)(<\\/?)/g;
+                xml = xml.replace(reg, '$1\\r\\n$2');
+                let pad = 0;
+                xml.split('\\r\\n').forEach(node => {
+                    let indent = 0;
+                    if (node.match(/.+<\\w[^>]*>$/)) {
+                        indent = 0;
+                    } else if (node.match(/^<\\w/)) {
+                        if (pad != 0) {
+                            indent = pad;
+                        }
+                    } else if (node.match(/^<\\/\\w/)) {
+                        if (pad != 0) {
+                            pad -= 1;
+                        }
+                        indent = pad;
+                    } else {
+                        indent = pad;
+                    }
+
+                    let padding = '';
+                    for (let i = 0; i < indent; i++) {
+                        padding += '  ';
+                    }
+
+                    formatted += padding + node + '\\r\\n';
+
+                    if (node.match(/.+<\\w[^>]*>$/)) {
+                       //no indent
+                    } else if (node.match(/^<\\w[^>]*>/)) {
+                        pad += 1;
+                    }
+                });
+                return formatted.replace(/\\r\\n/g, '\\n');
+            }
+        });
+    </script>
+
+</body>
+</html>

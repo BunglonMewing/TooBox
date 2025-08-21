@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Converter - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-4xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">Unit Converter</h1>
+            <p class="text-center text-gray-500 mb-8">Konversi berbagai jenis satuan.</p>
+
+            <div class="mb-6">
+                <label for="category" class="block text-sm font-medium text-gray-700">Pilih Kategori</label>
+                <select id="category" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                    <option value="length">Panjang</option>
+                    <option value="weight">Berat</option>
+                    <option value="temperature">Suhu</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="from-unit" class="block text-sm font-medium text-gray-700">Dari</label>
+                    <div class="flex">
+                        <input type="number" id="from-value" class="mt-1 block w-full p-2 border border-gray-300 rounded-l-md">
+                        <select id="from-unit" class="mt-1 block w-auto p-2 border-t border-b border-r border-gray-300 rounded-r-md bg-gray-50"></select>
+                    </div>
+                </div>
+                <div>
+                    <label for="to-unit" class="block text-sm font-medium text-gray-700">Ke</label>
+                     <div class="flex">
+                        <input type="text" id="to-value" class="mt-1 block w-full p-2 border border-gray-300 rounded-l-md bg-gray-50" readonly>
+                        <select id="to-unit" class="mt-1 block w-auto p-2 border-t border-b border-r border-gray-300 rounded-r-md bg-gray-50"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const categorySelect = document.getElementById('category');
+            const fromValueInput = document.getElementById('from-value');
+            const fromUnitSelect = document.getElementById('from-unit');
+            const toValueInput = document.getElementById('to-value');
+            const toUnitSelect = document.getElementById('to-unit');
+
+            const units = {
+                length: {
+                    m: { name: 'Meter (m)', factor: 1 },
+                    km: { name: 'Kilometer (km)', factor: 1000 },
+                    cm: { name: 'Centimeter (cm)', factor: 0.01 },
+                    mm: { name: 'Millimeter (mm)', factor: 0.001 },
+                    mi: { name: 'Mile (mi)', factor: 1609.34 },
+                    yd: { name: 'Yard (yd)', factor: 0.9144 },
+                    ft: { name: 'Foot (ft)', factor: 0.3048 },
+                    in: { name: 'Inch (in)', factor: 0.0254 }
+                },
+                weight: {
+                    kg: { name: 'Kilogram (kg)', factor: 1 },
+                    g: { name: 'Gram (g)', factor: 0.001 },
+                    mg: { name: 'Milligram (mg)', factor: 0.000001 },
+                    lb: { name: 'Pound (lb)', factor: 0.453592 },
+                    oz: { name: 'Ounce (oz)', factor: 0.0283495 }
+                },
+                temperature: {
+                    c: { name: 'Celcius (°C)' },
+                    f: { name: 'Fahrenheit (°F)' },
+                    k: { name: 'Kelvin (K)' }
+                }
+            };
+
+            function populateUnits() {
+                const category = categorySelect.value;
+                const unitData = units[category];
+
+                fromUnitSelect.innerHTML = '';
+                toUnitSelect.innerHTML = '';
+
+                for (const unit in unitData) {
+                    const option1 = document.createElement('option');
+                    option1.value = unit;
+                    option1.textContent = unitData[unit].name;
+                    fromUnitSelect.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = unit;
+                    option2.textContent = unitData[unit].name;
+                    toUnitSelect.appendChild(option2);
+                }
+                // Set default selections
+                fromUnitSelect.selectedIndex = 0;
+                toUnitSelect.selectedIndex = 1;
+                convert();
+            }
+
+            function convert() {
+                const category = categorySelect.value;
+                const fromValue = parseFloat(fromValueInput.value);
+                const fromUnit = fromUnitSelect.value;
+                const toUnit = toUnitSelect.value;
+
+                if (isNaN(fromValue)) {
+                    toValueInput.value = '';
+                    return;
+                }
+
+                if (category === 'temperature') {
+                    let c;
+                    if (fromUnit === 'c') c = fromValue;
+                    if (fromUnit === 'f') c = (fromValue - 32) * 5/9;
+                    if (fromUnit === 'k') c = fromValue - 273.15;
+
+                    let result;
+                    if (toUnit === 'c') result = c;
+                    if (toUnit === 'f') result = (c * 9/5) + 32;
+                    if (toUnit === 'k') result = c + 273.15;
+                    toValueInput.value = result.toFixed(2);
+                } else {
+                    const fromFactor = units[category][fromUnit].factor;
+                    const toFactor = units[category][toUnit].factor;
+                    const result = fromValue * fromFactor / toFactor;
+                    toValueInput.value = result.toFixed(5);
+                }
+            }
+
+            categorySelect.addEventListener('change', populateUnits);
+            fromValueInput.addEventListener('input', convert);
+            fromUnitSelect.addEventListener('change', convert);
+            toUnitSelect.addEventListener('change', convert);
+
+            // Initial population
+            populateUnits();
+        });
+    </script>
+
+</body>
+</html>
