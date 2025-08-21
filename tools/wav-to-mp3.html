@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAV to MP3 Converter - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-4xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">WAV to MP3 Converter</h1>
+            <p class="text-center text-gray-500 mb-8">Unggah file WAV Anda untuk dikonversi ke format MP3.</p>
+
+            <!-- File Input -->
+            <div class="mb-6">
+                <input type="file" id="file-input" accept="audio/wav" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+            </div>
+
+            <!-- Status Display -->
+            <div id="status" class="text-center text-gray-600 mb-6"></div>
+
+            <!-- Download Link -->
+            <div id="download-link-container" class="text-center"></div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('file-input');
+            const statusEl = document.getElementById('status');
+            const downloadLinkContainer = document.getElementById('download-link-container');
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file && file.type === 'audio/wav') {
+                    statusEl.textContent = 'Membaca file...';
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        statusEl.textContent = 'Mengonversi ke MP3...';
+                        const arrayBuffer = e.target.result;
+                        convertToMp3(arrayBuffer);
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    alert('Silakan unggah file .wav.');
+                }
+            });
+
+            function convertToMp3(arrayBuffer) {
+                try {
+                    const wav = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
+                    const samples = new Int16Array(arrayBuffer, wav.dataOffset, wav.dataLen / 2);
+                    const mp3Encoder = new lamejs.Mp3Encoder(wav.channels, wav.sampleRate, 128);
+                    const mp3Data = [];
+                    const sampleBlockSize = 1152;
+
+                    for (let i = 0; i < samples.length; i += sampleBlockSize) {
+                        const sampleChunk = samples.subarray(i, i + sampleBlockSize);
+                        const mp3buf = mp3Encoder.encodeBuffer(sampleChunk);
+                        if (mp3buf.length > 0) {
+                            mp3Data.push(mp3buf);
+                        }
+                    }
+
+                    const end = mp3Encoder.flush();
+                    if (end.length > 0) {
+                        mp3Data.push(end);
+                    }
+
+                    const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                    const url = URL.createObjectURL(blob);
+
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'output.mp3';
+                    link.textContent = 'Unduh File MP3';
+                    link.className = 'bg-primary text-white font-bold py-2 px-4 rounded-full hover:bg-secondary transition-colors';
+
+                    downloadLinkContainer.innerHTML = '';
+                    downloadLinkContainer.appendChild(link);
+
+                    statusEl.textContent = 'Konversi selesai. Silakan unduh file Anda.';
+                } catch (error) {
+                    statusEl.textContent = 'Terjadi kesalahan saat konversi. Pastikan file WAV valid.';
+                    console.error(error);
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
