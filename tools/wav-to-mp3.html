@@ -41,7 +41,19 @@
 
             <!-- File Input -->
             <div class="mb-6">
-                <input type="file" id="file-input" accept="audio/wav" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+                <label for="file-input" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-primary/30 rounded-lg cursor-pointer bg-primary/5 hover:bg-primary/10 transition-colors">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="fas fa-cloud-upload-alt text-primary text-3xl mb-2"></i>
+                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Klik untuk mengunggah</span> atau seret dan lepas</p>
+                        <p class="text-xs text-gray-500">File WAV (MAX. 50MB)</p>
+                    </div>
+                    <input id="file-input" type="file" accept=".wav,audio/wav,audio/x-wav" class="hidden" />
+                </label>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="progress-container" class="w-full bg-gray-200 rounded-full h-2.5 mb-4 hidden">
+                <div id="progress-bar" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
 
             <!-- Status Display -->
@@ -65,60 +77,178 @@
             const fileInput = document.getElementById('file-input');
             const statusEl = document.getElementById('status');
             const downloadLinkContainer = document.getElementById('download-link-container');
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+
+            // Handle drag and drop
+            const dropArea = fileInput.parentElement;
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                dropArea.classList.add('bg-primary/20');
+                dropArea.classList.add('border-primary');
+            }
+
+            function unhighlight() {
+                dropArea.classList.remove('bg-primary/20');
+                dropArea.classList.remove('border-primary');
+            }
+
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    fileInput.files = files;
+                    handleFiles(files);
+                }
+            }
 
             fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file && file.type === 'audio/wav') {
-                    statusEl.textContent = 'Membaca file...';
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        statusEl.textContent = 'Mengonversi ke MP3...';
-                        const arrayBuffer = e.target.result;
-                        convertToMp3(arrayBuffer);
-                    };
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    alert('Silakan unggah file .wav.');
+                if (event.target.files.length) {
+                    handleFiles(event.target.files);
                 }
             });
 
-            function convertToMp3(arrayBuffer) {
+            function handleFiles(files) {
+                const file = files[0];
+                
+                // Validasi ukuran file (maksimal 50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    statusEl.textContent = 'Ukuran file terlalu besar. Maksimal 50MB.';
+                    statusEl.classList.add('text-red-500');
+                    return;
+                }
+                
+                // Validasi tipe file
+                const validFileTypes = ['.wav', 'audio/wav', 'audio/x-wav'];
+                const fileType = file.type.toLowerCase();
+                const fileName = file.name.toLowerCase();
+                
+                const isValidType = validFileTypes.some(type => 
+                    fileType.includes(type) || fileName.endsWith(type)
+                );
+                
+                if (!isValidType) {
+                    statusEl.textContent = 'Silakan unggah file WAV yang valid.';
+                    statusEl.classList.add('text-red-500');
+                    return;
+                }
+                
+                statusEl.classList.remove('text-red-500');
+                statusEl.textContent = 'Membaca file...';
+                progressContainer.classList.remove('hidden');
+                updateProgress(10);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    updateProgress(30);
+                    statusEl.textContent = 'Mengonversi ke MP3...';
+                    const arrayBuffer = e.target.result;
+                    convertToMp3(arrayBuffer, file.name);
+                };
+                
+                reader.onerror = () => {
+                    statusEl.textContent = 'Gagal membaca file. Silakan coba lagi.';
+                    statusEl.classList.add('text-red-500');
+                    progressContainer.classList.add('hidden');
+                };
+                
+                reader.readAsArrayBuffer(file);
+            }
+
+            function updateProgress(percent) {
+                progressBar.style.width = percent + '%';
+            }
+
+            function convertToMp3(arrayBuffer, originalFileName) {
                 try {
+                    // Decode the WAV file
                     const wav = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
+                    
+                    if (!wav) {
+                        throw new Error("Format file WAV tidak valid");
+                    }
+                    
                     const samples = new Int16Array(arrayBuffer, wav.dataOffset, wav.dataLen / 2);
                     const mp3Encoder = new lamejs.Mp3Encoder(wav.channels, wav.sampleRate, 128);
+                    
                     const mp3Data = [];
                     const sampleBlockSize = 1152;
+                    let totalLength = 0;
 
                     for (let i = 0; i < samples.length; i += sampleBlockSize) {
                         const sampleChunk = samples.subarray(i, i + sampleBlockSize);
                         const mp3buf = mp3Encoder.encodeBuffer(sampleChunk);
+                        
                         if (mp3buf.length > 0) {
-                            mp3Data.push(mp3buf);
+                            mp3Data.push(new Int8Array(mp3buf));
+                            totalLength += mp3buf.length;
                         }
+                        
+                        // Update progress
+                        const progress = 30 + Math.floor((i / samples.length) * 60);
+                        updateProgress(progress);
                     }
 
                     const end = mp3Encoder.flush();
                     if (end.length > 0) {
-                        mp3Data.push(end);
+                        mp3Data.push(new Int8Array(end));
+                        totalLength += end.length;
                     }
 
-                    const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                    // Combine all MP3 data
+                    const combinedMP3 = new Int8Array(totalLength);
+                    let offset = 0;
+                    for (const chunk of mp3Data) {
+                        combinedMP3.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+
+                    const blob = new Blob([combinedMP3], { type: 'audio/mp3' });
                     const url = URL.createObjectURL(blob);
+
+                    // Generate output filename
+                    const outputFileName = originalFileName.replace(/\.wav$/i, '.mp3') || 'converted.mp3';
 
                     const link = document.createElement('a');
                     link.href = url;
-                    link.download = 'output.mp3';
+                    link.download = outputFileName;
                     link.textContent = 'Unduh File MP3';
                     link.className = 'bg-primary text-white font-bold py-2 px-4 rounded-full hover:bg-secondary transition-colors';
 
                     downloadLinkContainer.innerHTML = '';
                     downloadLinkContainer.appendChild(link);
 
+                    updateProgress(100);
+                    setTimeout(() => {
+                        progressContainer.classList.add('hidden');
+                    }, 500);
+                    
                     statusEl.textContent = 'Konversi selesai. Silakan unduh file Anda.';
                 } catch (error) {
+                    console.error('Conversion error:', error);
                     statusEl.textContent = 'Terjadi kesalahan saat konversi. Pastikan file WAV valid.';
-                    console.error(error);
+                    statusEl.classList.add('text-red-500');
+                    progressContainer.classList.add('hidden');
                 }
             }
         });
