@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Background - TooBox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4361ee',
+                        secondary: '#3a0ca3',
+                        accent: '#f72585',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Tambahkan style untuk background transparan */
+        .transparent-bg {
+            background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2">
+                <i class="fas fa-toolbox text-accent text-2xl"></i>
+                <span class="text-2xl font-bold">TooBox</span>
+            </a>
+            <a href="../index.html" class="text-white hover:text-accent transition-colors"><i class="fas fa-home mr-2"></i>Kembali ke Beranda</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-6 py-12">
+        <div class="bg-white max-w-3xl mx-auto rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-center text-secondary mb-2">Remove Background</h1>
+            <p class="text-center text-gray-500 mb-8">Hapus latar belakang dari gambar secara otomatis dengan sekali klik.</p>
+
+            <!-- Uploader -->
+            <div class="mb-6">
+                <label for="image-upload" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div id="upload-prompt" class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                        <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Klik untuk mengunggah</span> atau seret dan lepas</p>
+                        <p class="text-xs text-gray-500">JPG, PNG, WEBP (MAX. 10MB)</p>
+                    </div>
+                    <input id="image-upload" type="file" class="hidden" accept="image/jpeg, image/png, image/webp" />
+                </label>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="hidden text-center py-10">
+                <i class="fas fa-spinner fa-spin text-4xl text-primary"></i>
+                <p id="loader-text" class="mt-4 text-gray-600">Menghapus latar belakang... Ini mungkin memakan waktu beberapa saat.</p>
+            </div>
+
+            <!-- Results -->
+            <div id="result-section" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <!-- Original Image -->
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-secondary mb-2">Gambar Asli</h3>
+                        <img id="original-image" class="w-full h-auto rounded-lg shadow-md mx-auto max-h-80 object-contain">
+                    </div>
+                    <!-- Result Image -->
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-primary mb-2">Tanpa Latar Belakang</h3>
+                        <div class="relative">
+                            <img id="result-image" class="w-full h-auto rounded-lg shadow-md mx-auto max-h-80 object-contain transparent-bg">
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center pt-4">
+                    <a id="download-btn" class="w-full md:w-auto inline-block bg-green-500 text-white font-bold py-3 px-8 rounded-full hover:bg-green-600 transition-colors text-lg cursor-pointer">
+                        <i class="fas fa-download mr-2"></i>Unduh Gambar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-auto">
+        <div class="container mx-auto text-center text-gray-500">
+            <p>&copy; 2025 TooBox - All rights reserved</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        document.addEventListener('DOMContentLoaded', () => {
+            const imageUpload = document.getElementById('image-upload');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const loader = document.getElementById('loader');
+            const loaderText = document.getElementById('loader-text');
+            const resultSection = document.getElementById('result-section');
+
+            const originalImage = document.getElementById('original-image');
+            const resultImage = document.getElementById('result-image');
+            const downloadBtn = document.getElementById('download-btn');
+
+            imageUpload.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                resultSection.classList.add('hidden');
+                uploadPrompt.classList.add('hidden');
+                loader.classList.remove('hidden');
+
+                originalImage.src = URL.createObjectURL(file);
+
+                try {
+                    // Dynamically import the library
+                    const { default: removeBackground } = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal/dist/index.mjs');
+
+                    const resultBlob = await removeBackground(file, {
+                        progress: (key, current, total) => {
+                            const [action, asset] = key.split(':');
+                            const progress = ((current / total) * 100).toFixed(0);
+                            if (action === 'download') {
+                                loaderText.textContent = `Mengunduh model (${asset}): ${progress}%`;
+                            } else {
+                                loaderText.textContent = `Memproses gambar...`;
+                            }
+                        }
+                    });
+
+                    const url = URL.createObjectURL(resultBlob);
+                    resultImage.src = url;
+
+                    downloadBtn.onclick = () => {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `removed_bg_${file.name}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    };
+
+                    loader.classList.add('hidden');
+                    resultSection.classList.remove('hidden');
+
+                } catch (error) {
+                    loader.classList.add('hidden');
+                    uploadPrompt.classList.remove('hidden');
+                    alert('Gagal menghapus latar belakang. Silakan coba lagi dengan gambar lain.');
+                    console.error(error);
+                } finally {
+                    loaderText.textContent = "Menghapus latar belakang... Ini mungkin memakan waktu beberapa saat.";
+                    uploadPrompt.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
